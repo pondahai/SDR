@@ -1,0 +1,216 @@
+EESchema Schematic File Version 4
+LIBS:SDR_RECEIVER-cache
+EELAYER 29 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 1 5
+Title ""
+Date ""
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Sheet
+S 2150 4350 1750 850 
+U 5A8E24CA
+F0 "4066receive" 60
+F1 "4066receive.sch" 60
+F2 "ant_in" I L 2150 4900 60 
+F3 "RI" I R 3900 5000 60 
+F4 "RQ" I R 3900 5100 60 
+F5 "QaP" I R 3900 4500 50 
+F6 "QbP" I R 3900 4700 50 
+F7 "QaN" I R 3900 4600 50 
+F8 "QbN" I R 3900 4800 50 
+$EndSheet
+Wire Wire Line
+	1950 4900 2150 4900
+$Comp
+L SDR3-rescue:GNDREF #PWR0101
+U 1 1 5A8E5217
+P 1750 5400
+F 0 "#PWR0101" H 1750 5150 50  0001 C CNN
+F 1 "GNDREF" H 1750 5250 50  0000 C CNN
+F 2 "" H 1750 5400 50  0001 C CNN
+F 3 "" H 1750 5400 50  0001 C CNN
+	1    1750 5400
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1750 5400 1750 5100
+$Sheet
+S 4850 3050 1750 750 
+U 5A8E7D70
+F0 "74ac74" 60
+F1 "74ac74.sch" 60
+F2 "clk_in" I R 6600 3600 60 
+F3 "QaP" I L 4850 3200 50 
+F4 "QbP" I L 4850 3400 50 
+F5 "QaN" I L 4850 3300 50 
+F6 "QbN" I L 4850 3500 50 
+$EndSheet
+Wire Wire Line
+	4150 4500 3900 4500
+Wire Wire Line
+	4150 3200 4150 4500
+Wire Wire Line
+	4150 3200 4850 3200
+Wire Wire Line
+	4250 4600 3900 4600
+Wire Wire Line
+	4250 3300 4250 4600
+Wire Wire Line
+	4250 3300 4850 3300
+Wire Wire Line
+	4350 4700 3900 4700
+Wire Wire Line
+	4350 3400 4350 4700
+Wire Wire Line
+	4350 3400 4850 3400
+Wire Wire Line
+	4450 4800 3900 4800
+Wire Wire Line
+	4450 3500 4450 4800
+Wire Wire Line
+	4450 3500 4850 3500
+$Sheet
+S 7100 3050 1000 750 
+U 5CFBCE64
+F0 "arduino" 50
+F1 "arduino.sch" 50
+F2 "CLK_OUT" I L 7100 3600 50 
+F3 "A0" I L 7100 3250 50 
+F4 "A1" I L 7100 3350 50 
+$EndSheet
+Wire Wire Line
+	7100 3600 6600 3600
+$Comp
+L Connector:Conn_Coaxial J1
+U 1 1 5C87ACD3
+P 1750 4900
+F 0 "J1" H 1680 5138 50  0000 C CNN
+F 1 "ANT." H 1680 5047 50  0000 C CNN
+F 2 "Connector_Coaxial:BNC_TEConnectivity_1478204_Vertical" H 1750 4900 50  0001 C CNN
+F 3 " ~" H 1750 4900 50  0001 C CNN
+	1    1750 4900
+	-1   0    0    -1  
+$EndComp
+$Sheet
+S 4850 1250 1250 850 
+U 5C8669B6
+F0 "usb-audio" 50
+F1 "usb-audio.sch" 50
+F2 "RI" I L 4850 1950 50 
+F3 "RQ" I L 4850 2050 50 
+F4 "TI" I L 4850 1350 50 
+F5 "TQ" I L 4850 1450 50 
+$EndSheet
+Wire Wire Line
+	4850 1950 4550 1950
+Wire Wire Line
+	4550 1950 4550 2600
+Wire Wire Line
+	4550 5000 3900 5000
+Wire Wire Line
+	3900 5100 4650 5100
+Wire Wire Line
+	4650 5100 4650 2700
+Wire Wire Line
+	4650 2050 4850 2050
+$Comp
+L Mechanical:MountingHole_Pad MH1
+U 1 1 5C887F9E
+P 1600 6150
+F 0 "MH1" H 1700 6201 50  0000 L CNN
+F 1 "MountingHole_Pad" H 1700 6110 50  0000 L CNN
+F 2 "MountingHole:MountingHole_3.2mm_M3_Pad" H 1600 6150 50  0001 C CNN
+F 3 "~" H 1600 6150 50  0001 C CNN
+	1    1600 6150
+	1    0    0    -1  
+$EndComp
+$Comp
+L Mechanical:MountingHole_Pad MH2
+U 1 1 5C888030
+P 1600 6400
+F 0 "MH2" H 1700 6451 50  0000 L CNN
+F 1 "MountingHole_Pad" H 1700 6360 50  0000 L CNN
+F 2 "MountingHole:MountingHole_3.2mm_M3_Pad" H 1600 6400 50  0001 C CNN
+F 3 "~" H 1600 6400 50  0001 C CNN
+	1    1600 6400
+	1    0    0    -1  
+$EndComp
+$Comp
+L Mechanical:MountingHole_Pad MH3
+U 1 1 5C888047
+P 1600 6650
+F 0 "MH3" H 1700 6701 50  0000 L CNN
+F 1 "MountingHole_Pad" H 1700 6610 50  0000 L CNN
+F 2 "MountingHole:MountingHole_3.2mm_M3_Pad" H 1600 6650 50  0001 C CNN
+F 3 "~" H 1600 6650 50  0001 C CNN
+	1    1600 6650
+	1    0    0    -1  
+$EndComp
+$Comp
+L Mechanical:MountingHole_Pad MH4
+U 1 1 5C888062
+P 1600 6900
+F 0 "MH4" H 1700 6951 50  0000 L CNN
+F 1 "MountingHole_Pad" H 1700 6860 50  0000 L CNN
+F 2 "MountingHole:MountingHole_3.2mm_M3_Pad" H 1600 6900 50  0001 C CNN
+F 3 "~" H 1600 6900 50  0001 C CNN
+	1    1600 6900
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1600 6250 1450 6250
+Wire Wire Line
+	1450 6250 1450 6500
+Wire Wire Line
+	1600 7000 1450 7000
+Connection ~ 1450 7000
+Wire Wire Line
+	1450 7000 1450 7150
+Wire Wire Line
+	1600 6750 1450 6750
+Connection ~ 1450 6750
+Wire Wire Line
+	1450 6750 1450 7000
+Wire Wire Line
+	1600 6500 1450 6500
+Connection ~ 1450 6500
+Wire Wire Line
+	1450 6500 1450 6750
+$Comp
+L power:GNDREF #PWR071
+U 1 1 5C889F79
+P 1450 7150
+F 0 "#PWR071" H 1450 6900 50  0001 C CNN
+F 1 "GNDREF" H 1455 6977 50  0000 C CNN
+F 2 "" H 1450 7150 50  0001 C CNN
+F 3 "" H 1450 7150 50  0001 C CNN
+	1    1450 7150
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	7100 3250 6900 3250
+Wire Wire Line
+	6900 3250 6900 2600
+Wire Wire Line
+	6900 2600 4550 2600
+Connection ~ 4550 2600
+Wire Wire Line
+	4550 2600 4550 5000
+Wire Wire Line
+	7100 3350 6800 3350
+Wire Wire Line
+	6800 3350 6800 2700
+Wire Wire Line
+	6800 2700 4650 2700
+Connection ~ 4650 2700
+Wire Wire Line
+	4650 2700 4650 2050
+$EndSCHEMATC
