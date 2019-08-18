@@ -1,4 +1,5 @@
 # SDR
 my sdr
 
-![](sdr_hardware.png)
+![](sdr-hardware.png)
+![](sdr-software.png)
