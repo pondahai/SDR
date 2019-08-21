@@ -72,8 +72,10 @@ RATE = 48000
 CHUNK = 4096
 
 WINDOW_HALF_WIDTH = CHUNK//12
-LOW_FREQ_POINT = CHUNK//3-WINDOW_HALF_WIDTH
-HIGH_FREQ_POINT = CHUNK//3+WINDOW_HALF_WIDTH
+#LOW_FREQ_POINT = CHUNK//3-WINDOW_HALF_WIDTH
+LOW_FREQ_POINT = 0
+#HIGH_FREQ_POINT = CHUNK//3+WINDOW_HALF_WIDTH
+HIGH_FREQ_POINT = WINDOW_HALF_WIDTH * 2
 
 FFT_NEW_XAXIS = RATE//1000//2
 
@@ -385,41 +387,49 @@ def callback(in_data, frame_count, time_info, status):
     # I-Q data fetch
     left_input = result[:,0]
     right_input = result[:,1]
-    # I-Q demodulation directly
-    buffer = np.sqrt(np.power(left_input, 2) + np.power(right_input, 2))
-    
-    # fft and normalize
-    dfft_from_IQ_demod = np.fft.rfft(buffer ,norm = 'ortho')  # CHUNK
+    # I-Q demodulation 
+    magnitude = np.sqrt(np.power(right_input, 2) + np.power(left_input, 2))
+    magnitude -= (np.amax(magnitude) - np.amin(magnitude))/2
+    phase = np.arctan2(right_input,left_input) * 10
+    # fft from IQ 
+    dfft_from_IQ = np.fft.rfft(magnitude ,norm = 'ortho')  # CHUNK
     #fft_shift = dfft
-    left_dfft = np.fft.rfft(left_input ,norm = 'ortho')  # CHUNK
-    right_dfft = np.fft.rfft(right_input ,norm = 'ortho')  # CHUNK
+    #left_dfft = np.fft.rfft(left_input ,norm = 'ortho')  # CHUNK
+    #right_dfft = np.fft.rfft(right_input ,norm = 'ortho')  # CHUNK
     # for display
-    dfft = left_dfft + right_dfft
+    #dfft = left_dfft + right_dfft
+    dfft = dfft_from_IQ
     
     # find the peak point(carrier)
-    left_loged_shifted_fft = np.log10(left_dfft[LOW_FREQ_POINT:HIGH_FREQ_POINT]+0.001)
-    left_peak_pos = np.argmax(left_loged_shifted_fft)
-    left_peak_value = np.absolute(np.amax(left_loged_shifted_fft))
-    right_loged_shifted_fft = np.log10(right_dfft[LOW_FREQ_POINT:HIGH_FREQ_POINT]+0.001)
-    right_peak_pos = np.argmax(right_loged_shifted_fft)
-    right_peak_value = np.absolute(np.amax(right_loged_shifted_fft))
+    #left_loged_shifted_fft = np.log10(left_dfft[LOW_FREQ_POINT:HIGH_FREQ_POINT]+0.001)
+    #left_peak_pos = np.argmax(left_loged_shifted_fft)
+    #left_peak_value = np.absolute(np.amax(left_loged_shifted_fft))
+    #right_loged_shifted_fft = np.log10(right_dfft[LOW_FREQ_POINT:HIGH_FREQ_POINT]+0.001)
+    #right_peak_pos = np.argmax(right_loged_shifted_fft)
+    #right_peak_value = np.absolute(np.amax(right_loged_shifted_fft))
     
+    combined_loged_shifted_fft = np.log10(dfft_from_IQ[LOW_FREQ_POINT:HIGH_FREQ_POINT]+0.001)
+    combined_peak_pos = np.argmax(combined_loged_shifted_fft)
+    combined_peak_value = np.absolute(np.amax(combined_loged_shifted_fft))
     # spectrum segment and agc
     # ((10**2)/peak_value)
-    left_fft_cut = ((10**2.1)/left_peak_value) * left_dfft[LOW_FREQ_POINT+left_peak_pos:HIGH_FREQ_POINT]
-    right_fft_cut = ((10**2.1)/right_peak_value) * right_dfft[LOW_FREQ_POINT+right_peak_pos:HIGH_FREQ_POINT]
+    
+    #left_fft_cut = ((10**2.1)/left_peak_value) * left_dfft[LOW_FREQ_POINT+left_peak_pos:HIGH_FREQ_POINT]
+    #right_fft_cut = ((10**2.1)/right_peak_value) * right_dfft[LOW_FREQ_POINT+right_peak_pos:HIGH_FREQ_POINT]
     #left_fft_cut = ((10**1)/left_peak_value) * left_dfft[LOW_FREQ_POINT+left_peak_pos:HIGH_FREQ_POINT]
     #right_fft_cut = ((10**1)/right_peak_value) * right_dfft[LOW_FREQ_POINT+right_peak_pos:HIGH_FREQ_POINT]
+    combined_fft_cut = ((10**2.1)/combined_peak_value) * dfft_from_IQ[LOW_FREQ_POINT+combined_peak_pos:HIGH_FREQ_POINT]
     
     # reshape freq domain data
-    if len(left_fft_cut) > 0:
-        left_fft_cut[:int(len(left_fft_cut)*0.1)] = left_fft_cut[:int(len(left_fft_cut)*0.1)] * np.linspace(0.00001,1,int(len(left_fft_cut)*0.1))
-    if len(right_fft_cut) > 0:
-        right_fft_cut[:int(len(right_fft_cut)*0.1)] = right_fft_cut[:int(len(right_fft_cut)*0.1)] * np.linspace(0.00001,1,int(len(right_fft_cut)*0.1))
-    min_np_array_size = min(len(left_fft_cut),len(right_fft_cut))
-    # for display
-    fft_cut = left_fft_cut[:min_np_array_size] + right_fft_cut[:min_np_array_size]
+    #if len(left_fft_cut) > 0:
+    #    left_fft_cut[:int(len(left_fft_cut)*0.1)] = left_fft_cut[:int(len(left_fft_cut)*0.1)] * np.linspace(0.00001,1,int(len(left_fft_cut)*0.1))
+    #if len(right_fft_cut) > 0:
+    #    right_fft_cut[:int(len(right_fft_cut)*0.1)] = right_fft_cut[:int(len(right_fft_cut)*0.1)] * np.linspace(0.00001,1,int(len(right_fft_cut)*0.1))
+    #min_np_array_size = min(len(left_fft_cut),len(right_fft_cut))
     
+    # for display
+    #fft_cut = left_fft_cut[:min_np_array_size] + right_fft_cut[:min_np_array_size]
+    fft_cut = combined_fft_cut
     # inverse fft
     ifft = np.fft.irfft(a=fft_cut , n=CHUNK ,norm = 'ortho')
     # inverse fft from left only
