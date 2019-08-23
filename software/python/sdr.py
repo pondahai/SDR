@@ -175,6 +175,7 @@ def stream_write(commands, stream2):
 # key event
 stream2=0
 cursor_middle_point_freq=0
+cursor_left_point_freq=0
 commands=""
 old_commands=""
 old_freq=0
@@ -182,7 +183,7 @@ digits=""
 old_digits=""
 def keypress(event):
     global stream2
-    global cursor_middle_point_freq
+    global cursor_left_point_freq
     global commands
     global old_commands
     global old_freq
@@ -207,7 +208,7 @@ def keypress(event):
         old_digits=digits
         freq=int(digits)
         digits=""
-        freq = freq - (cursor_middle_point_freq*1000)
+        freq = freq - (cursor_left_point_freq*1000)
         if freq < 0:
             freq = 0
         if freq > 0 and freq < 30000000:
@@ -224,7 +225,7 @@ def keypress(event):
         old_digits=digits
         freq=int(digits)
         digits=""
-        freq = freq - (cursor_middle_point_freq*1000)
+        freq = freq - (cursor_left_point_freq*1000)
         if freq < 0:
             freq = 0
         if freq > 0 and freq < 30000000:
@@ -241,7 +242,7 @@ def keypress(event):
         old_digits=digits
         freq=int(digits)
         digits=""
-        freq = freq - (cursor_middle_point_freq*1000)
+        freq = freq - (cursor_left_point_freq*1000)
         if freq < 0:
             freq = 0
         if freq > 0 and freq < 30000000:
@@ -359,6 +360,23 @@ except NameError: sys.exit()
 try: OUTPUT_DEVICE
 except NameError: sys.exit()
 
+"""
+                                 left  -->
+usb audio in_data --reshape-->
+                                 right -->
+
+case 1:
+left  --fft--> left_ffted  --> find peak position and magnitude from cursor region-->
+                                                                                      combine --fft_cut--> ifft
+right --fft--> right_ffted --> find peak position and magnitude from cursor region-->
+
+case 2:
+left  -->
+          magnitude from 畢氏定理 --> find peak position and magnitude from cursor region--> --fft_cut--> ifft
+right -->
+
+ifft --pop supressing--> filtered
+"""
 # process i-q signal
 frame_process_finish = False
 def callback(in_data, frame_count, time_info, status):
@@ -389,54 +407,66 @@ def callback(in_data, frame_count, time_info, status):
     right_input = result[:,1]
     # I-Q demodulation 
     magnitude = np.sqrt(np.power(right_input, 2) + np.power(left_input, 2))
-    magnitude -= (np.amax(magnitude) - np.amin(magnitude))/2
-    phase = np.arctan2(right_input,left_input) * 10
+    magnitude -= np.mean(magnitude)
+    phase = np.arctan2(right_input,left_input) * 1000
+    fm_demod = np.diff(phase)
+    fm_demod -= np.mean(fm_demod)
     # fft from IQ 
     dfft_from_IQ = np.fft.rfft(magnitude ,norm = 'ortho')  # CHUNK
     #fft_shift = dfft
-    #left_dfft = np.fft.rfft(left_input ,norm = 'ortho')  # CHUNK
-    #right_dfft = np.fft.rfft(right_input ,norm = 'ortho')  # CHUNK
+    left_dfft = np.fft.rfft(left_input ,norm = 'ortho')  # CHUNK
+    right_dfft = np.fft.rfft(right_input ,norm = 'ortho')  # CHUNK
     # for display
-    #dfft = left_dfft + right_dfft
-    dfft = dfft_from_IQ
+    dfft = left_dfft + right_dfft
+    #dfft = left_dfft
+    #dfft = dfft_from_IQ
     
     # find the peak point(carrier)
-    #left_loged_shifted_fft = np.log10(left_dfft[LOW_FREQ_POINT:HIGH_FREQ_POINT]+0.001)
-    #left_peak_pos = np.argmax(left_loged_shifted_fft)
-    #left_peak_value = np.absolute(np.amax(left_loged_shifted_fft))
-    #right_loged_shifted_fft = np.log10(right_dfft[LOW_FREQ_POINT:HIGH_FREQ_POINT]+0.001)
-    #right_peak_pos = np.argmax(right_loged_shifted_fft)
-    #right_peak_value = np.absolute(np.amax(right_loged_shifted_fft))
+    left_loged_shifted_fft = np.log10(left_dfft[LOW_FREQ_POINT:HIGH_FREQ_POINT]+0.001)
+    left_peak_pos = np.argmax(left_loged_shifted_fft)
+    left_peak_value = np.absolute(np.amax(left_loged_shifted_fft))
+    right_loged_shifted_fft = np.log10(right_dfft[LOW_FREQ_POINT:HIGH_FREQ_POINT]+0.001)
+    right_peak_pos = np.argmax(right_loged_shifted_fft)
+    right_peak_value = np.absolute(np.amax(right_loged_shifted_fft))
     
     combined_loged_shifted_fft = np.log10(dfft_from_IQ[LOW_FREQ_POINT:HIGH_FREQ_POINT]+0.001)
-    combined_peak_pos = np.argmax(combined_loged_shifted_fft)
-    combined_peak_value = np.absolute(np.amax(combined_loged_shifted_fft))
+    #combined_peak_pos = np.argmax(combined_loged_shifted_fft)
+    combined_peak_pos = 0
+    #combined_peak_value = np.absolute(np.amax(combined_loged_shifted_fft))
+    combined_peak_value = np.absolute(combined_loged_shifted_fft[0])
     # spectrum segment and agc
     # ((10**2)/peak_value)
     
-    #left_fft_cut = ((10**2.1)/left_peak_value) * left_dfft[LOW_FREQ_POINT+left_peak_pos:HIGH_FREQ_POINT]
-    #right_fft_cut = ((10**2.1)/right_peak_value) * right_dfft[LOW_FREQ_POINT+right_peak_pos:HIGH_FREQ_POINT]
+    left_fft_cut = ((10**2.1)/left_peak_value) * left_dfft[LOW_FREQ_POINT+left_peak_pos:HIGH_FREQ_POINT]
+    right_fft_cut = ((10**2.1)/right_peak_value) * right_dfft[LOW_FREQ_POINT+right_peak_pos:HIGH_FREQ_POINT]
     #left_fft_cut = ((10**1)/left_peak_value) * left_dfft[LOW_FREQ_POINT+left_peak_pos:HIGH_FREQ_POINT]
     #right_fft_cut = ((10**1)/right_peak_value) * right_dfft[LOW_FREQ_POINT+right_peak_pos:HIGH_FREQ_POINT]
-    combined_fft_cut = ((10**2.1)/combined_peak_value) * dfft_from_IQ[LOW_FREQ_POINT+combined_peak_pos:HIGH_FREQ_POINT]
+    combined_fft_cut = ((10**1.8)/combined_peak_value) * dfft_from_IQ[LOW_FREQ_POINT+combined_peak_pos:HIGH_FREQ_POINT]
+    #combined_fft_cut = ((10**4.7)/np.amax(dfft_from_IQ[LOW_FREQ_POINT+combined_peak_pos:HIGH_FREQ_POINT])) * dfft_from_IQ[LOW_FREQ_POINT+combined_peak_pos:HIGH_FREQ_POINT]
     
     # reshape freq domain data
-    #if len(left_fft_cut) > 0:
-    #    left_fft_cut[:int(len(left_fft_cut)*0.1)] = left_fft_cut[:int(len(left_fft_cut)*0.1)] * np.linspace(0.00001,1,int(len(left_fft_cut)*0.1))
-    #if len(right_fft_cut) > 0:
-    #    right_fft_cut[:int(len(right_fft_cut)*0.1)] = right_fft_cut[:int(len(right_fft_cut)*0.1)] * np.linspace(0.00001,1,int(len(right_fft_cut)*0.1))
-    #min_np_array_size = min(len(left_fft_cut),len(right_fft_cut))
+    if len(left_fft_cut) > 0:
+        left_fft_cut[:int(len(left_fft_cut)*0.1)] = left_fft_cut[:int(len(left_fft_cut)*0.1)] * np.linspace(0.00001,1,int(len(left_fft_cut)*0.1))
+    if len(right_fft_cut) > 0:
+        right_fft_cut[:int(len(right_fft_cut)*0.1)] = right_fft_cut[:int(len(right_fft_cut)*0.1)] * np.linspace(0.00001,1,int(len(right_fft_cut)*0.1))
+    min_np_array_size = min(len(left_fft_cut),len(right_fft_cut))
     
     # for display
-    #fft_cut = left_fft_cut[:min_np_array_size] + right_fft_cut[:min_np_array_size]
-    fft_cut = combined_fft_cut
+    fft_cut = left_fft_cut[:min_np_array_size] + right_fft_cut[:min_np_array_size]
+    #fft_cut = left_fft_cut
+    #fft_cut = combined_fft_cut
+    
     # inverse fft
     ifft = np.fft.irfft(a=fft_cut , n=CHUNK ,norm = 'ortho')
+        
     # inverse fft from left only
     #ifft = np.fft.irfft(a=left_fft_cut , n=CHUNK ,norm = 'ortho')
+    
     # inverse fft from IQ_demod directly
     #ifft = buffer
-    
+    #ifft = phase
+    #ifft = np.append(fm_demod,0)
+    #ifft = magnitude * 50   
     
     # low frequency suppressing
     # nadpass filter
@@ -460,7 +490,7 @@ def callback(in_data, frame_count, time_info, status):
     filtered[0::2]=ifft
     filtered[1::2]=ifft
     
-    # solidify
+    # solidify for display
     solid_dfft=np.log10(abs(dfft[:])+0.001)
     solid_fft_cut=np.log10(abs(fft_cut[:])+0.001)
     solid_filtered=filtered[:]
@@ -502,7 +532,9 @@ while stream.is_active():
             li2.set_xdata(np.arange(len(log_fft)))
             li2.set_ydata(log_fft)
             peak_pos = np.argmax(log_fft[LOW_FREQ_POINT:HIGH_FREQ_POINT])
+            #peak_pos = 0
             peak_value = np.absolute(np.amax(log_fft))
+            #peak_value = np.absolute(log_fft[LOW_FREQ_POINT])
             peak_marker.set_data(LOW_FREQ_POINT+peak_pos,peak_value) #
             #if peak_value > 0:
                 #peak_point_y_ratio = left_peak_value/(ax[0].get_ylim()[1]-ax[0].get_ylim()[0])
@@ -512,6 +544,7 @@ while stream.is_active():
             peak_offset_freq = (np.ceil((peak_point_x_ratio*(RATE//100//2)))/10)
             peak_txt.set_text(' {0:.1f} @{1:.1f} kHz'.format(peak_value,peak_offset_freq))
             cursor_middle_point_freq = (np.ceil(((LOW_FREQ_POINT+((HIGH_FREQ_POINT-LOW_FREQ_POINT)/2))/(ax1.get_xlim()[1]-ax1.get_xlim()[0])*(RATE//100//2)))/10)
+            cursor_left_point_freq = (np.ceil(((LOW_FREQ_POINT)/(ax1.get_xlim()[1]-ax1.get_xlim()[0])*(RATE//100//2)))/10)
             # waterfall
             Z = np.vstack((Z, log_fft))
             Z = np.delete(Z, 1, axis=0)
@@ -529,7 +562,8 @@ while stream.is_active():
             
             plt.pause(0.001)
             frame_process_finish = False
-        except:
+        except Exception as err:
+            #print(err)
             pass
         else:
             pass
